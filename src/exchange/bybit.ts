@@ -112,16 +112,16 @@ export class BybitService {
     }
   }
   async getBalance(params:{coin:string}){
-    const {ret_code, ret_msg} = await this.linear.getWalletBalance(params)
+    const {ret_code, ret_msg, result} = await this.linear.getWalletBalance(params)
     if(ret_code ===0){
-        const bal = await this.linear.getWalletBalance(params)
-        console.log("============")
-        return bal
+        // const bal = await this.linear.getWalletBalance(params)
+        return result
     }else{
-        console.log("?????")
         console.error(ret_msg)
     }
   }
+
+
   async chaseOrder(params:{
     orderId: string,
     symbol: string,

@@ -27,6 +27,8 @@
     "express": "^4.18.2",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^4.6.0",
+    "telegraf": "^4.11.2",
+    "telegraph": "^0.8.22",
     "ts-node-dev": "^2.0.0",
     "typescript": "^4.9.5"
   },

@@ -11,8 +11,10 @@ const bybitBal = new BybitService({
 });
 
 async function getMyBalance(req: Request, res: Response) {
-  const coin = req.body;
-  if (coin) {
+  
+
+  if (req.body) {
+    let coin = req.body;
     const bal = await bybitBal.getBalance(coin);
     console.log("eeeeeeeeee", bal);
     res.status(200).json({
