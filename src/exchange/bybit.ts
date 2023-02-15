@@ -32,17 +32,17 @@ export class BybitService {
     reduce_only: boolean;
     close_on_trigger: boolean;
     position_idx: LinearPositionIdx;
-  }): Promise<LinearOrder | null> {
+  }): Promise<any | null> {
     console.log(params.price);
     let { result, ret_code, ret_msg } = await this.linear.placeActiveOrder(
       params
     );
     if (ret_code === 0) {
       console.log(result);
-      return result;
+      return {result, ret_code, ret_msg};
     } else {
       console.log(ret_code, ret_msg);
-      throw new Error(ret_msg);
+      return (ret_msg);
     }
     return null;
   }
@@ -97,6 +97,7 @@ export class BybitService {
       return false;
     }
   }
+  //geting klines
   async getKlines(params: {
     symbol: string;
     interval: string;
@@ -111,62 +112,64 @@ export class BybitService {
       console.error(ret_msg);
     }
   }
-  async getBalance(params:{coin:string}){
-    const {ret_code, ret_msg, result} = await this.linear.getWalletBalance(params)
-    if(ret_code ===0){
-        // const bal = await this.linear.getWalletBalance(params)
-        return result
-    }else{
-        console.error(ret_msg)
+  async getBalance(params: { coin: string }) {
+    const { ret_code, ret_msg, result } = await this.linear.getWalletBalance(
+      params
+    );
+    if (ret_code === 0) {
+      // const bal = await this.linear.getWalletBalance(params)
+      return result;
+    } else {
+      console.error(ret_msg);
     }
   }
 
-
-  async chaseOrder(params:{
-    orderId: string,
-    symbol: string,
-    trailBybps:number,
-    maxRetries: number,
-    side: string
-  }){
+  async chaseOrder(params: {
+    orderId: string;
+    symbol: string;
+    trailBybps: number;
+    maxRetries: number;
+    side: string;
+  }) {
     let count = 0;
-    let{maxRetries,orderId,symbol,trailBybps} = params
-    if(!orderId){
-        console.error("no order to chase")
+    let { maxRetries, orderId, symbol, trailBybps } = params;
+    if (!orderId) {
+      console.error("no order to chase");
     }
-    maxRetries = maxRetries ?? 100
-    while(true){
-        await sleep(30000)
-        console.log('chasing order')
-       let price = await this.getPrice(symbol) 
+    maxRetries = maxRetries ?? 100;
+    while (true) {
+      await sleep(30000);
+      console.log("chasing order");
+      let price = await this.getPrice(symbol);
 
-       if (price === null){
-        console.error("could not get the price")
-       }else{
-        trailBybps = trailBybps ?? 0.01
+      if (price === null) {
+        console.error("could not get the price");
+      } else {
+        trailBybps = trailBybps ?? 0.01;
         price = params.side === "Buy" ? price - 0.05 : price + 0.05;
-        let {ret_code,result,ret_msg}= await this.linear.replaceActiveOrder({
+        let { ret_code, result, ret_msg } =
+          await this.linear.replaceActiveOrder({
             order_id: orderId,
-            p_r_price: parseFloat((price).toFixed(2)),
-            symbol: symbol
-        })
+            p_r_price: parseFloat(price.toFixed(2)),
+            symbol: symbol,
+          });
         // let currentDate:string = await currentTime()
-        if(ret_code ===0){
-            orderId = result.order_id
-            const msg = 'order replaced successfully'
-            console.log(msg)
-            
-        }else if(ret_msg?.includes('too late to replace')){
-            console.log("order already in position")
-            break
-        }else{
-            continue
+        if (ret_code === 0) {
+          orderId = result.order_id;
+          const msg = "order replaced successfully";
+          console.log(msg);
+        } else if (ret_msg?.includes("too late to replace")) {
+          console.log("order already in position");
+          break;
+        } else {
+          continue;
         }
-        if(count> maxRetries){
-            console.log("maximum retries have been reached")
+        if (count > maxRetries) {
+          console.log("maximum retries have been reached");
         }
-
-       }
+      }
     }
   }
+
+  
 }
