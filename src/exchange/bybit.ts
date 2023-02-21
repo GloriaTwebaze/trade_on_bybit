@@ -175,9 +175,11 @@ export class BybitService {
 
 
   //get pnl
-  async getPnl(){
+  async getPnl(symbol:string){
     try{
-      let {result, ret_code,ret_msg} = await this.linear.getPosition()
+      let {result, ret_code,ret_msg} = await this.linear.getPosition({symbol})
+      console.log(result,"pnl........")
+
     if(ret_code === 0){
       return result
     }else{
@@ -189,3 +191,5 @@ export class BybitService {
   }
   
 }
+
+

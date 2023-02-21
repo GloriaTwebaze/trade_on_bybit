@@ -129,27 +129,25 @@ bot.start((Context) => {
   //gettting pnl
 bot.action("getpnl", async(ctx)=>{
   schedule('*/5 * * * * */',async () => {
-    const {positions, success, ret_msg}:any = await bybitService.getPnl()
-    if(success === true){
-      const pnl = positions.map(positions,({
-        size: positions.size,
-        side: positions.side,
-        unrealisedPnl: positions.unrealised_pnl,
-        market: positions.symbol}))
+    const pnl:any = await bybitService.getPnl("BTCUSDT")
+    if(pnl){
+       const unrealised_pnl = pnl.map(async (item:any)=>{
+        item.size
+        item.side
+        item.unrealisedPnl
+        })
         console.log(pnl, "pnl is.....")
 
-      await ctx.reply(`Your PNL is ${pnl.toFixed(2)}`)
+      await ctx.reply(`Your PNL is ${pnl[0].unrealised_pnl}`)
     } else {
-      await ctx.reply(`Failed to get positions: ${ret_msg}`)
+      await ctx.reply(`Failed to get positions: `)
     }
   })
-})
+}).start
+
+
 });
-//exit chat
-bot.command("quit", async(ctx)=>{
-  ctx.leaveChat()
-  messageSender("chat exited")
-})
+
 // display balance details
 bot.command("getbalance", async (Context) => {
   const { USDT }: any = await bybitService.getBalance({ coin: "USDT" });
