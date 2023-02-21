@@ -1,17 +1,12 @@
 import { Context, Markup, Telegraf } from "telegraf";
-import { symbolName } from "typescript";
+import { schedule } from "node-cron";
 import { Configs } from "../config";
 import { BybitService } from "../exchange";
 import { bybitService } from "../utils/bybitInit";
 import { normalizeMessage } from "../utils/telgram";
+import { Position } from "@uniswap/v3-sdk";
 
 const bot = new Telegraf(Configs.BOT_TOKEN);
-const botKeys = {
-  key: Configs.API_KEY,
-  baseUrl: Configs.MAIN_URL,
-  secret: Configs.SECRET_API,
-  testnet: true,
-};
 //initialize the bot
 bot.start((Context) => {
   Context.reply(
@@ -21,6 +16,7 @@ bot.start((Context) => {
       Markup.button.callback("Buy", "placelimitorder"),
       Markup.button.callback("Sell", "exitposition"),
       Markup.button.callback("close order", "cancellimitorder"),
+      Markup.button.callback("check PNL", "getpnl")
     ])
   );
 
@@ -37,7 +33,7 @@ bot.start((Context) => {
       messageSender(message, false);
     }
   });
-
+//buying token
   bot.action("placelimitorder", async (ctx) => {
     const keyboard = Markup.inlineKeyboard([
       Markup.button.callback("Buy 2 BTC", "buy"),
@@ -46,7 +42,6 @@ bot.start((Context) => {
     ctx.reply("confirm order", keyboard);
     bot.action("buy", async (ctx) => {
       const price: any = Number(await bybitService.getPrice("BTCUSDT"));
-      let message = "";
       const { result }: any = await bybitService.placeOrder({
         symbol: "BTCUSDT",
         side: "Buy",
@@ -59,6 +54,7 @@ bot.start((Context) => {
         position_idx: 0,
       });
       if (result) {
+      let message = "";
         message += `${result?.symbol}`;
         message += `\n user Id: \`${result?.user_id}\``;
         message += `\n order Id: \`${result?.order_id}\``;
@@ -129,7 +125,29 @@ bot.start((Context) => {
   });
   messageSender("", false);
   })
+
+  //gettting pnl
+bot.action("getpnl", async(ctx)=>{
+  schedule('*/5 * * * * */',async () => {
+    const pnl:any = await bybitService.getPnl("BTCUSDT")
+    if(pnl){
+       const unrealised_pnl = pnl.map(async (item:any)=>{
+        item.size
+        item.side
+        item.unrealisedPnl
+        })
+        console.log(pnl, "pnl is.....")
+
+      await ctx.reply(`Your PNL is ${pnl[0].unrealised_pnl}`)
+    } else {
+      await ctx.reply(`Failed to get positions: `)
+    }
+  })
+}).start
+
+
 });
+
 // display balance details
 bot.command("getbalance", async (Context) => {
   const { USDT }: any = await bybitService.getBalance({ coin: "USDT" });
@@ -145,7 +163,6 @@ bot.command("getbalance", async (Context) => {
 
 bot.command("placelimitorder", async (ctx) => {
   const price: any = Number(await bybitService.getPrice("BTCUSDT"));
-  let message = "";
   const { result }: any = await bybitService.placeOrder({
     symbol: "BTCUSDT",
     side: "Buy",
@@ -158,6 +175,7 @@ bot.command("placelimitorder", async (ctx) => {
     position_idx: 0,
   });
   if (result) {
+    let message = "Chasing order";
     message += `${result?.symbol}`;
     message += `\n user Id: \`${result?.user_id}\``;
     message += `\n order Id: \`${result?.order_id}\``;

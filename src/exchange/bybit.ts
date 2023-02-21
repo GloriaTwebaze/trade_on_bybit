@@ -8,6 +8,8 @@ import {
   RestClientOptions,
   SymbolIntervalFromLimitParam,
 } from "bybit-api";
+import { sys } from "typescript";
+import { bybitService } from "../utils/bybitInit";
 import { sleep } from "../utils/sleep";
 
 export class BybitService {
@@ -171,5 +173,23 @@ export class BybitService {
     }
   }
 
+
+  //get pnl
+  async getPnl(symbol:string){
+    try{
+      let {result, ret_code,ret_msg} = await this.linear.getPosition({symbol})
+      console.log(result,"pnl........")
+
+    if(ret_code === 0){
+      return result
+    }else{
+      console.error(ret_msg)
+    }
+    }catch(err){
+      throw new Error("error getting pnl")
+    }
+  }
   
 }
+
+
