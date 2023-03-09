@@ -1,4 +1,3 @@
-import { Result } from "ethers";
 import { Request, Response } from "express";
 import { Configs } from "../config";
 import { BybitService } from "../exchange/bybit";

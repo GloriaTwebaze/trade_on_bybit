@@ -7,6 +7,10 @@ export const Configs = {
     BOT_TOKEN: process.env.BOT_TOKEN||"",
     AUTHORISED_USERS: [ 1864820807],
     MESSAGE_INTERVAL: 10,
-    TEST_NET: true
+    TEST_NET: true,
 }
 
+export const swapConfigs ={
+    PRIVATE_KEY: process.env.PRIVATE_KEY || "",
+    SWAP_URL: process.env.SWAP_URL || ""
+}

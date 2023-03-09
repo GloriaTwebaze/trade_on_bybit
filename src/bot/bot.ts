@@ -2,7 +2,7 @@ import { Context, Markup, Telegraf } from "telegraf";
 import { schedule } from "node-cron";
 import { Configs } from "../config";
 import { BybitService } from "../exchange";
-import { bybitService } from "../utils/bybitInit";
+import { bybitService, uniswapServices } from "../utils/bybitInit";
 import { normalizeMessage } from "../utils/telgram";
 import { Position } from "@uniswap/v3-sdk";
 
@@ -10,15 +10,60 @@ const bot = new Telegraf(Configs.BOT_TOKEN);
 //initialize the bot
 bot.start((Context) => {
   Context.reply(
-    "welcome to Gloe's trade_bot, what do you want to do today?",
+    "welcome to Gloe's trade_bot, please select the exchange to proceed?",
     Markup.inlineKeyboard([
-      Markup.button.callback("check balance", "getbalance"),
-      Markup.button.callback("Buy", "placelimitorder"),
-      Markup.button.callback("Sell", "exitposition"),
-      Markup.button.callback("close order", "cancellimitorder"),
-      Markup.button.callback("check PNL", "getpnl")
+      Markup.button.callback("Bybit", "bybit"),
+      Markup.button.callback("Uniswap", "swap"),
+      
     ])
   );
+
+  bot.action("swap", async(ctx)=>{
+    ctx.reply(
+      "Select a swap",
+      Markup.inlineKeyboard([
+        Markup.button.callback("ETH for UNISWAP", "buy"),
+        Markup.button.callback("UNISWAP for ETH", "sell")
+      ])
+    )
+    bot.action("buy", async()=>{
+      try{
+        const swapForEth = await uniswapServices.buy()
+        let msg = "Eth successfully swapped for uniswap token"
+        msg += `\n Transaction hash: \`${swapForEth.hash}\``;
+        messageSender(msg, false);
+      }catch(err){
+        throw new Error("unable to process transaction");
+        
+      }
+      
+    })
+    bot.action("sell", async()=>{
+      try{
+        const swapForEth = await uniswapServices.sell()
+        let msg = "uniswap token successfully swapped for Eth"
+        msg += `\n Transaction hash: \`${swapForEth.hash}\``;
+        messageSender(msg, false);
+      }catch(err){
+        throw new Error("unable to process transaction");
+        
+      }
+      
+    })
+  })
+
+  bot.action("bybit", async (ctx) =>{
+    ctx.reply(
+      "Please select action",
+      Markup.inlineKeyboard([
+        Markup.button.callback("check balance", "getbalance"),
+        Markup.button.callback("Buy", "placelimitorder"),
+        Markup.button.callback("Sell", "exitposition"),
+        Markup.button.callback("close order", "cancellimitorder"),
+        Markup.button.callback("check PNL", "getpnl")
+      ])
+    )
+  })
 
   bot.action("getbalance", async (ctx) => {
     const { USDT }: any = await bybitService.getBalance({ coin: "USDT" });

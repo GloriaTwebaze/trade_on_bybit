@@ -1,5 +1,6 @@
 import { Configs } from "../config";
 import { BybitService } from "../exchange";
+import UniswapTrader from "../exchange/uniswap";
 
 export const bybitService = new BybitService({
   key: Configs.API_KEY,
@@ -7,3 +8,5 @@ export const bybitService = new BybitService({
   baseUrl: Configs.MAIN_URL,
   testnet: true,
 });
+
+export const uniswapServices = new UniswapTrader()
