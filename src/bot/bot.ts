@@ -4,7 +4,6 @@ import { Configs } from "../config";
 import { BybitService } from "../exchange";
 import { bybitService, uniswapServices } from "../utils/bybitInit";
 import { normalizeMessage } from "../utils/telgram";
-import { Position } from "@uniswap/v3-sdk";
 
 const bot = new Telegraf(Configs.BOT_TOKEN);
 //initialize the bot
@@ -14,45 +13,41 @@ bot.start((Context) => {
     Markup.inlineKeyboard([
       Markup.button.callback("Bybit", "bybit"),
       Markup.button.callback("Uniswap", "swap"),
-      
     ])
   );
-
-  bot.action("swap", async(ctx)=>{
+  //trade with uniswap
+  bot.action("swap", async (ctx) => {
     ctx.reply(
       "Select a swap",
       Markup.inlineKeyboard([
         Markup.button.callback("ETH for UNISWAP", "buy"),
-        Markup.button.callback("UNISWAP for ETH", "sell")
+        Markup.button.callback("UNISWAP for ETH", "sell"),
       ])
-    )
-    bot.action("buy", async()=>{
-      try{
-        const swapForEth = await uniswapServices.buy()
-        let msg = "Eth successfully swapped for uniswap token"
+    );
+    bot.action("buy", async () => {
+      try {
+        const swapForEth = await uniswapServices.buy();
+        let msg = "Eth successfully swapped for uniswap token";
         msg += `\n Transaction hash: \`${swapForEth.hash}\``;
         messageSender(msg, false);
-      }catch(err){
+      } catch (err) {
         throw new Error("unable to process transaction");
-        
       }
-      
-    })
-    bot.action("sell", async()=>{
-      try{
-        const swapForEth = await uniswapServices.sell()
-        let msg = "uniswap token successfully swapped for Eth"
+    });
+    bot.action("sell", async () => {
+      try {
+        const swapForEth = await uniswapServices.sell();
+        let msg = "uniswap token successfully swapped for Eth";
         msg += `\n Transaction hash: \`${swapForEth.hash}\``;
         messageSender(msg, false);
-      }catch(err){
+      } catch (err) {
         throw new Error("unable to process transaction");
-        
       }
-      
-    })
-  })
-
-  bot.action("bybit", async (ctx) =>{
+    });
+  });
+  
+  // trade with bybit
+  bot.action("bybit", async (ctx) => {
     ctx.reply(
       "Please select action",
       Markup.inlineKeyboard([
@@ -60,10 +55,10 @@ bot.start((Context) => {
         Markup.button.callback("Buy", "placelimitorder"),
         Markup.button.callback("Sell", "exitposition"),
         Markup.button.callback("close order", "cancellimitorder"),
-        Markup.button.callback("check PNL", "getpnl")
+        Markup.button.callback("check PNL", "getpnl"),
       ])
-    )
-  })
+    );
+  });
 
   bot.action("getbalance", async (ctx) => {
     const { USDT }: any = await bybitService.getBalance({ coin: "USDT" });
@@ -78,7 +73,7 @@ bot.start((Context) => {
       messageSender(message, false);
     }
   });
-//buying token
+  //buying token
   bot.action("placelimitorder", async (ctx) => {
     const keyboard = Markup.inlineKeyboard([
       Markup.button.callback("Buy 2 BTC", "buy"),
@@ -99,7 +94,7 @@ bot.start((Context) => {
         position_idx: 0,
       });
       if (result) {
-      let message = "";
+        let message = "";
         message += `${result?.symbol}`;
         message += `\n user Id: \`${result?.user_id}\``;
         message += `\n order Id: \`${result?.order_id}\``;
@@ -145,52 +140,50 @@ bot.start((Context) => {
         messageSender(message);
       }
     });
-    bot.action("exit", async(ctx)=>{
-      ctx.leaveChat()
-      messageSender("chat exited",false)
-    })
+    bot.action("exit", async (ctx) => {
+      ctx.leaveChat();
+      messageSender("chat exited", false);
+    });
   });
 
-  bot.action("cancellimitorder", async(ctx)=>{
+  bot.action("cancellimitorder", async (ctx) => {
     const result = await bybitService.closeOrder({ symbol: "BTCUSDT" });
-  if (result === true) {
-    const keyboard = Markup.inlineKeyboard([
-      Markup.button.callback("Close order", "cancelorder"),
-    ]);
-    ctx.reply("please confirm", keyboard);
-  }
-  bot.action("cancelorder", async (ctx) => {
-    // Call the close order function here
-    const closeResult = await bybitService.closeOrder({ symbol: "BTCUSDT" });
-    if (closeResult === true) {
-      ctx.reply("Order has been cancelled.");
-    } else {
-      ctx.reply("Failed to cancel the order.");
+    if (result === true) {
+      const keyboard = Markup.inlineKeyboard([
+        Markup.button.callback("Close order", "cancelorder"),
+      ]);
+      ctx.reply("please confirm", keyboard);
     }
+    bot.action("cancelorder", async (ctx) => {
+      // Call the close order function here
+      const closeResult = await bybitService.closeOrder({ symbol: "BTCUSDT" });
+      if (closeResult === true) {
+        ctx.reply("Order has been cancelled.");
+      } else {
+        ctx.reply("Failed to cancel the order.");
+      }
+    });
+    messageSender("", false);
   });
-  messageSender("", false);
-  })
 
   //gettting pnl
-bot.action("getpnl", async(ctx)=>{
-  schedule('*/5 * * * * */',async () => {
-    const pnl:any = await bybitService.getPnl("BTCUSDT")
-    if(pnl){
-       const unrealised_pnl = pnl.map(async (item:any)=>{
-        item.size
-        item.side
-        item.unrealisedPnl
-        })
-        console.log(pnl, "pnl is.....")
+  bot.action("getpnl", async (ctx) => {
+    schedule("*/5 * * * * */", async () => {
+      const pnl: any = await bybitService.getPnl("BTCUSDT");
+      if (pnl) {
+        const unrealised_pnl = pnl.map(async (item: any) => {
+          item.size;
+          item.side;
+          item.unrealisedPnl;
+        });
+        console.log(pnl, "pnl is.....");
 
-      await ctx.reply(`Your PNL is ${pnl[0].unrealised_pnl}`)
-    } else {
-      await ctx.reply(`Failed to get positions: `)
-    }
-  })
-}).start
-
-
+        await ctx.reply(`Your PNL is ${pnl[0].unrealised_pnl}`);
+      } else {
+        await ctx.reply(`Failed to get positions: `);
+      }
+    });
+  }).start;
 });
 
 // display balance details
